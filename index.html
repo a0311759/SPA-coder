@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equation to SPA code</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .guidelines-button-green {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #28a745; /* Green color */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .guidelines-button-blue {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #007bff; /* Blue color */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .documentation {
+            display: none;
+            padding: 20px;
+            background-color: #d4edda;
+            border-radius: 10px;
+            margin-top: 20px;
+            width: 70%;
+            max-height: 80%; /* Adjust the maximum height as needed */
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+        .documentation::-webkit-scrollbar {
+            width: 10px; /* Width of the scrollbar */
+        }
+        .documentation::-webkit-scrollbar-thumb {
+            background-color: #6c757d; /* Color of the scrollbar thumb */
+            border-radius: 5px; /* Rounded corners */
+        }
+    </style>
+</head>
+<body>
+    <button class="guidelines-button-green" onclick="showDocumentation()">Guidelines</button>
+
+    <div class="container" id="mainContent">
+        <h2 class="text-center mb-4">Equation to App Tool</h2>
+        <input id="editableTitle" class="form-control mb-4" placeholder="Enter your title of App here..."></input>
+        <form id="equationForm">
+            <div class="form-group">
+                <label for="equation">Enter Equation:</label>
+                <input type="text" class="form-control" id="equation" placeholder="e.g., A = B+C" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Generate Code</button>
+        </form>
+        <div id="result" class="mt-4"></div>
+    </div>
+
+    <div class="documentation" id="documentation">
+        <button class="guidelines-button-blue" onclick="hideDocumentation()">Back</button>
+        <div>
+    <h1>Guidelines</h1>
+    <ul>
+        <li>The input variable will pass the validation checks before being implemented into the SPA (single page application).</li>
+        <li>Every equation should consist of LHS (left-hand side) and RHS (right-hand side). Example: A = B + C is correct. And equation like c + d = b is invalid.</li>
+        <li>Operations allowed are (+, -, *, /, %, ^).</li>
+        <li>% stands for modulus operation and ^ stands for "to the power of".</li>
+        <li>Every variable used in the equation must not contain special symbols except _. Example: x@t = f + g&t is invalid.</li>
+        <li>Make sure to use BDMAS (Bracket, Divide, Multiply, Addition, Subtraction) rule for checking the priority of arithmetic operators.</li>
+        <li>Equations that make no sense will be considered invalid. Example: A = b + - r or k = j j + g.</li>
+        <li>Do not use "e" as an operand. "e" stands for Euler's Number, and π will be evaluated as pie.</li>
+        <li>Operators like *, /, and ^ have the same priority. The one which is used first will be given higher priority. Use brackets to resolve the issue. For example, Pythagoras' theorem can be expressed as <b>H = (p^2 + b^2)^0.5</b>.</li>
+        <li>Example: <b>Compound_Interest = (Principal * (1 + (Rate / 100))^Time) - Principal</b>.</li>
+        <li>Tip: Use full forms in formulas with appropriate use of underscores to ensure readability and user-friendliness in your app.</li>
+        <li>The resultant HTML script can be run by saving it as filename.html in order to create your first auto-generated SPA.</li>
+    </ul>
+</div>
+
+    </div>
+
+<script>
+document.getElementById('equationForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const equation = document.getElementById('equation').value.trim();
+    const resultDiv = document.getElementById('result');
+
+    const variablePattern = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+    const numberPattern = /^-?\d*\.?\d+$/;
+    const operatorPattern = /[\+\-\*\/\%\^]$/;
+    const bracketPattern = /[\(\)]/;
+
+
+    function isValidEquation(eq) {
+        if (!eq) return false;
+
+        // Check if equation ends with an operator
+        if (operatorPattern.test(eq)) return false;
+
+        const parts = eq.split('=');
+        if (parts.length !== 2) return false;
+
+        const lhs = parts[0].trim();
+        const rhs = parts[1].trim();
+
+        if (!variablePattern.test(lhs)) return false;
+
+        // Check for unbalanced parentheses
+        let openBrackets = 0;
+        for (let char of rhs) {
+            if (char === '(') openBrackets++;
+            else if (char === ')') openBrackets--;
+            if (openBrackets < 0) return false;
+        }
+        if (openBrackets !== 0) return false;
+
+        // Check for invalid expressions within parentheses
+        if (/\(\)/.test(rhs)) return false; // Empty parentheses
+
+        const rhsTokens = rhs.split(/([\+\-\*\/\%\^\(\)])/).filter(token => token.trim().length > 0);
+        let lastToken = '';
+        for (let token of rhsTokens) {
+            token = token.trim();
+            if (bracketPattern.test(token)) {
+                if (token === '(' && (operatorPattern.test(lastToken) || lastToken === '' || lastToken === '(')) {
+                    lastToken = token;
+                    continue;
+                }
+                if (token === ')' && !operatorPattern.test(lastToken) && lastToken !== '(') {
+                    lastToken = token;
+                    continue;
+                }
+                return false;
+            }
+
+            if (variablePattern.test(token) || numberPattern.test(token) || token === 'π' || token === 'e') {
+                if (variablePattern.test(lastToken) || numberPattern.test(lastToken) || lastToken === 'π' || lastToken === 'e') return false;
+            } else if (operatorPattern.test(token)) {
+                if (operatorPattern.test(lastToken) || lastToken === '(') return false;
+            } else {
+                return false;
+            }
+
+            lastToken = token;
+        }
+
+        if (operatorPattern.test(lastToken)) return false;
+        return true;
+    }
+
+    if (isValidEquation(equation)) {
+        const title = document.getElementById('editableTitle').value;
+        const rhsOperands = equation.split('=')[1].trim().split(/([\+\-\*\/\%\^\(\)])/).filter(token => token.trim().length > 0);
+        let htmlInputs = '';
+        let seenOperands = new Set();
+        let includesPi = false;
+        let includesE = false;
+
+        rhsOperands.forEach(operand => {
+            if (operand === 'π') includesPi = true;
+            if (operand === 'e') includesE = true;
+            if (variablePattern.test(operand) && !seenOperands.has(operand) && operand !== 'π' && operand !== 'e') {
+                htmlInputs += `<div class="form-group">
+                                    <label for="${operand}">${operand}:</label>
+                                    <input type="text" class="form-control" id="${operand}" placeholder="${operand}">
+                                </div>`;
+                seenOperands.add(operand);
+            }
+        });
+
+        const piDefinition = includesPi ? 'const π = Math.PI;\n' : '';
+        const eDefinition = includesE ? 'const e = Math.E;\n' : '';
+
+        const htmlCode = `
+        <!-- paste this code to html file generate your app-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #e9f5e6;
+            border-radius: 10px;
+            padding: 20px;
+            width: 70%;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-wrapper">
+        <div class="container">
+            <h2 class="text-center mb-4">${title}</h2>
+            <form id="equationForm">
+                ${htmlInputs}
+                <button type="submit" class="btn btn-primary btn-block" onclick="
+                    event.preventDefault();
+                    let isValid = true;
+                    let variables = {};
+                    const inputs = document.querySelectorAll('input');
+                    inputs.forEach(input => {
+                        if (!/^-?\\d*\\.?\\d+$/.test(input.value)) {
+                            document.getElementById('result').innerHTML = 'Please enter valid numbers in all fields.';
+                            isValid = false;
+                            return false;
+                        }
+                        variables[input.id] = parseFloat(input.value);
+                    });
+                    if (isValid) {
+                        ${piDefinition}${eDefinition}
+                        let equation = \`${equation.split('=')[1].trim()}\`;
+                        equation = equation.replace(/\\^/g, '**');
+                        let evaluatedEquation = equation;
+                        for (const variable in variables) {
+                            const regex = new RegExp(variable, 'g');
+                            evaluatedEquation = evaluatedEquation.replace(regex, variables[variable]);
+                        }
+                        try {
+                            const result = eval(evaluatedEquation);
+                            document.getElementById('result').innerHTML = 'The result is: ' + result;
+                        } catch (e) {
+                            document.getElementById('result').innerHTML = 'Error in evaluating the equation.';
+                        }
+                    }
+                ">Calculate</button>
+            </form>
+            <div id="result"></div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+        resultDiv.innerHTML = `<textarea class="form-control mt-4" rows="10">${htmlCode}</textarea>`;
+    } else {
+        resultDiv.innerHTML = '<div class="alert alert-danger">The equation is invalid.</div>';
+    }
+});
+
+function showDocumentation() {
+    document.getElementById("mainContent").style.display = "none";
+    document.getElementById("documentation").style.display = "block";
+}
+
+function hideDocumentation() {
+    document.getElementById("documentation").style.display = "none";
+    document.getElementById("mainContent").style.display = "block";
+}
+</script>
+</body>
+</html>
+
+
+
+
